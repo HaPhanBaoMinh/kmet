@@ -373,16 +373,16 @@ func (m *Model) rebuildTable() {
 	case ViewPods:
 		cols := []table.Column{
 			{Title: "POD (ctr)", Width: 36},
-			{Title: "CPU", Width: 12},
-			{Title: "MEM", Width: 14},
+			{Title: "CPU", Width: 26},
+			{Title: "MEM", Width: 32},
 			{Title: "READY", Width: 6},
 			{Title: "NODE", Width: 16},
 			{Title: "Trend", Width: 12},
 		}
 		var rows []table.Row
 		for _, p := range m.pods {
-			cpuBar := widgets.Bar(float64(p.CPUm)/500.0, 8) // normalize ~500m
-			memBar := widgets.Bar(float64(p.MemBytes)/(1.2*1024*1024*1024), 10)
+			cpuBar := widgets.Bar(float64(p.CPUm)/500.0, 20) // normalize ~500m
+			memBar := widgets.Bar(float64(p.MemBytes)/(1.2*1024*1024*1024), 25)
 			rows = append(rows, table.Row{
 				fmt.Sprintf("%s (%s)", p.PodName, p.Container),
 				fmt.Sprintf("%3dm %s", p.CPUm, cpuBar),
