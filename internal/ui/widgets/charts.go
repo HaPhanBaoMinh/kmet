@@ -30,14 +30,29 @@ func Spark8(vals []float64, width int) string {
 }
 
 func Bar(v float64, width int) string {
-	v = clamp01(v)
+	if math.IsNaN(v) || math.IsInf(v, 0) {
+		v = 0
+	}
+	if v < 0 {
+		v = 0
+	}
+	if v > 1 {
+		v = 1
+	}
+
 	fill := int(math.Round(v * float64(width)))
+
+	if v > 0 && fill == 0 {
+		fill = 1
+	}
+
 	if fill < 0 {
 		fill = 0
 	}
 	if fill > width {
 		fill = width
 	}
+
 	return strings.Repeat("█", fill) + strings.Repeat(" ", width-fill)
 }
 

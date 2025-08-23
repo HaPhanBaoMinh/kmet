@@ -98,7 +98,7 @@ func New(repoM domain.MetricsRepo, repoL domain.LogsRepo) Model {
 	m.nsTable.SetColumns([]table.Column{{Title: "Namespaces", Width: 32}})
 	var nsRows []table.Row
 	for _, ns := range m.nsList {
-		m.ns = m.nsList[0]
+		// m.ns = m.nsList[0]
 		nsRows = append(nsRows, table.Row{ns})
 	}
 	m.nsTable.SetRows(nsRows)
@@ -291,7 +291,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		switch msg.String() {
-		case "ctrl+c", "q", "esc":
+		case "ctrl+c", "q":
 			if m.logsCancel != nil {
 				m.logsCancel()
 			}
@@ -373,20 +373,59 @@ func (m *Model) rebuildTable() {
 	case ViewPods:
 		cols := []table.Column{
 			{Title: "POD (ctr)", Width: 36},
-			{Title: "CPU", Width: 26},
-			{Title: "MEM", Width: 32},
+			{Title: "CPU", Width: 10},
+			{Title: "", Width: 32},
+			{Title: "MEM", Width: 10},
+			{Title: "", Width: 32},
 			{Title: "READY", Width: 6},
 			{Title: "NODE", Width: 16},
 			{Title: "Trend", Width: 12},
 		}
+
+		// Find max CPU and Mem (used for normalization fallback)
+		var maxCPU, maxMem int
+		for _, p := range m.pods {
+			if p.CPUm > maxCPU {
+				maxCPU = p.CPUm
+			}
+			if int(p.MemBytes) > maxMem {
+				maxMem = int(p.MemBytes)
+			}
+		}
+		if maxCPU == 0 {
+			maxCPU = 1
+		}
+		if maxMem == 0 {
+			maxMem = 1
+		}
+
 		var rows []table.Row
 		for _, p := range m.pods {
-			cpuBar := widgets.Bar(float64(p.CPUm)/500.0, 20) // normalize ~500m
-			memBar := widgets.Bar(float64(p.MemBytes)/(1.2*1024*1024*1024), 25)
+			cpuNum := fmt.Sprintf("%4dm", p.CPUm)
+			memNum := fmt.Sprintf("%6.1fMi", float64(p.MemBytes)/(1024*1024))
+
+			var cpuNormBase float64
+			if p.CPUReqm > 0 {
+				cpuNormBase = float64(p.CPUReqm)
+			} else {
+				cpuNormBase = float64(maxCPU)
+			}
+			cpuBar := widgets.Bar(float64(p.CPUm)/cpuNormBase, 20)
+
+			var memNormBase float64
+			if p.MemReqBytes > 0 {
+				memNormBase = float64(p.MemReqBytes)
+			} else {
+				memNormBase = float64(maxMem)
+			}
+			memBar := widgets.Bar(float64(p.MemBytes)/memNormBase, 25)
+
 			rows = append(rows, table.Row{
 				fmt.Sprintf("%s (%s)", p.PodName, p.Container),
-				fmt.Sprintf("%3dm %s", p.CPUm, cpuBar),
-				fmt.Sprintf("%4.1fMi %s", float64(p.MemBytes)/(1024*1024), memBar),
+				cpuNum,
+				cpuBar,
+				memNum,
+				memBar,
 				p.Ready,
 				p.NodeName,
 				widgets.Spark8(p.CPUTrend.Samples, 8),
@@ -516,13 +555,49 @@ func (m Model) renderInfo() string {
 			return "No pods"
 		}
 		p := m.pods[i%len(m.pods)]
-		utilCPU := float64(p.CPUm) / float64(max(1, p.CPUReqm))
-		utilMem := float64(p.MemBytes) / float64(max64(1, p.MemReqBytes))
+
+		// Find max CPU and MEM among all pods for normalization
+		var maxCPU int
+		var maxMem int64
+		for _, pod := range m.pods {
+			if pod.CPUm > maxCPU {
+				maxCPU = pod.CPUm
+			}
+			if pod.MemBytes > maxMem {
+				maxMem = pod.MemBytes
+			}
+		}
+		if maxCPU == 0 {
+			maxCPU = 1
+		}
+		if maxMem == 0 {
+			maxMem = 1
+		}
+
+		// Utilization vs Request
+		utilCPUReq := float64(p.CPUm) / float64(max(1, p.CPUReqm))
+		utilMemReq := float64(p.MemBytes) / float64(max64(1, p.MemReqBytes))
+
+		// Utilization vs Max
+		utilCPUMax := float64(p.CPUm) / float64(maxCPU)
+		utilMemMax := float64(p.MemBytes) / float64(maxMem)
+
 		return fmt.Sprintf(
-			"Pod: %s  ns: %s  node: %s  phase: %s\nImage: ghcr.io/acme/%s:mock\nRequests: cpu=%dm mem=%dMi  Ready: %s\nUtil vs Req: CPU %.0f%% %s  MEM %.0f%% %s\nTrend CPU: %s\nTrend MEM: %s",
-			p.PodName, p.Namespace, p.NodeName, p.Phase, p.Container, p.CPUReqm, p.MemReqBytes/(1024*1024), p.Ready,
-			utilCPU*100, widgets.Bar(utilCPU/2.5, 12), // scale a bit
-			utilMem*100, widgets.Bar(utilMem/3.0, 12),
+			`Pod: %s  ns: %s  node: %s  phase: %s
+Image: ghcr.io/acme/%s:mock
+Requests: cpu=%dm mem=%dMi  Ready: %s
+
+Util vs Req: CPU %.0f%% %s  MEM %.0f%% %s
+Util vs Max: CPU %.0f%% %s  MEM %.0f%% %s
+
+Trend CPU: %s
+Trend MEM: %s`,
+			p.PodName, p.Namespace, p.NodeName, p.Phase, p.Container,
+			p.CPUReqm, p.MemReqBytes/(1024*1024), p.Ready,
+			utilCPUReq*100, widgets.Bar(utilCPUReq/2.5, 12), // scale a bit
+			utilMemReq*100, widgets.Bar(utilMemReq/3.0, 12),
+			utilCPUMax*100, widgets.Bar(utilCPUMax, 12),
+			utilMemMax*100, widgets.Bar(utilMemMax, 12),
 			widgets.Spark8(p.CPUTrend.Samples, 30),
 			widgets.Spark8(p.MemTrend.Samples, 30),
 		)
