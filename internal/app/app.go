@@ -325,24 +325,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.infoOpen = !m.infoOpen
 			return m, func() tea.Msg { return tea.WindowSizeMsg{Width: m.width, Height: m.height} }
 
-		case "l":
-			if m.logsOpen {
-				m.logsOpen = false
-				if m.logsCancel != nil {
-					m.logsCancel()
-				}
-				return m, func() tea.Msg { return tea.WindowSizeMsg{Width: m.width, Height: m.height} }
-			}
-			m.logsOpen = true
-			target := m.currentLogsTarget()
-			ctx, cancel := context.WithCancel(m.ctx)
-			m.logsCancel = cancel
-			m.logsVP.SetContent("")
-			m.logBuf.Reset()
-			return m, tea.Batch(
-				m.consumeLogs(ctx, target),
-				func() tea.Msg { return tea.WindowSizeMsg{Width: m.width, Height: m.height} },
-			)
+		// case "l":
+		// 	if m.logsOpen {
+		// 		m.logsOpen = false
+		// 		if m.logsCancel != nil {
+		// 			m.logsCancel()
+		// 		}
+		// 		return m, func() tea.Msg { return tea.WindowSizeMsg{Width: m.width, Height: m.height} }
+		// 	}
+		// 	m.logsOpen = true
+		// 	target := m.currentLogsTarget()
+		// 	ctx, cancel := context.WithCancel(m.ctx)
+		// 	m.logsCancel = cancel
+		// 	m.logsVP.SetContent("")
+		// 	m.logBuf.Reset()
+		// 	return m, tea.Batch(
+		// 		m.consumeLogs(ctx, target),
+		// 		func() tea.Msg { return tea.WindowSizeMsg{Width: m.width, Height: m.height} },
+		// 	)
 
 		case "s":
 			if m.sortBy == "cpu" {
@@ -466,7 +466,7 @@ func (m Model) consumeLogs(ctx context.Context, t domain.LogsTarget) tea.Cmd {
 
 func (m Model) View() string {
 	head := styles.Header.Render(
-		fmt.Sprintf("kmet v0.x  │ ctx: dev  ns: %s  view: %s  sort: %s  (Tab switch Pods/Nodes)  [i]info [l]logs [s]sort [q]quit",
+		fmt.Sprintf("kmet v0.x  │ ctx: dev  ns: %s  view: %s  sort: %s  (Tab switch Pods/Nodes)  [i]info [s]sort [q]quit",
 			m.ns, map[View]string{ViewPods: "Pods", ViewNodes: "Nodes"}[m.view], m.sortBy),
 	)
 	body := lipgloss.NewStyle().Padding(0, 1).Render(m.table.View())
@@ -498,7 +498,7 @@ func (m Model) View() string {
 			box.Render(content),
 		)
 	}
-	footer := styles.Footer.Render("↑/↓ move • [Tab] switch view • [n] namespace • [i] info • [l] logs • [s] sort • [q] quit")
+	footer := styles.Footer.Render("↑/↓ move • [Tab] switch view • [n] namespace • [i] info • [s] sort • [q] quit")
 
 	main := lipgloss.JoinVertical(lipgloss.Left, head, body, info, logs, footer)
 	if m.nsPickerOpen {
