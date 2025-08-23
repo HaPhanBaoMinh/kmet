@@ -438,21 +438,33 @@ func (m *Model) rebuildTable() {
 	case ViewNodes:
 		cols := []table.Column{
 			{Title: "NODE", Width: 20},
-			{Title: "CPU%", Width: 16},
-			{Title: "MEM%", Width: 16},
-			{Title: "PODS", Width: 5},
-			{Title: "K8S", Width: 5},
+			{Title: "CPU%", Width: 8},
+			{Title: "", Width: 16}, // CPU bar
+			{Title: "MEM%", Width: 8},
+			{Title: "", Width: 16}, // MEM bar
+			{Title: "PODS", Width: 6},
+			{Title: "K8S", Width: 8},
 			{Title: "Trend", Width: 12},
 		}
 		var rows []table.Row
 		for _, n := range m.nodes {
+			cpuPct := fmt.Sprintf("%3.0f%%", n.CPUUsed*100)
+			memPct := fmt.Sprintf("%3.0f%%", n.MEMUsed*100)
+			cpuBar := widgets.Bar(n.CPUUsed, 16)
+			memBar := widgets.Bar(n.MEMUsed, 16)
+			trend := widgets.Spark8(n.CPUTrend.Samples, 8)
+			if trend == "" {
+				trend = "—"
+			}
 			rows = append(rows, table.Row{
-				n.NodeName,
-				fmt.Sprintf("%3.0f%% %s", n.CPUUsed*100, widgets.Bar(n.CPUUsed, 8)),
-				fmt.Sprintf("%3.0f%% %s", n.MEMUsed*100, widgets.Bar(n.MEMUsed, 8)),
-				fmt.Sprintf("%d", n.Pods),
-				n.K8sVer,
-				widgets.Spark8(n.CPUTrend.Samples, 8),
+				n.NodeName,                // 1
+				cpuPct,                    // 2
+				cpuBar,                    // 3
+				memPct,                    // 4
+				memBar,                    // 5
+				fmt.Sprintf("%d", n.Pods), // 6
+				n.K8sVer,                  // 7
+				trend,                     // 8
 			})
 		}
 		m.table.SetColumns(cols)
