@@ -48,7 +48,6 @@ func New(kubeconfigPath, contextName string) (*Repo, error) {
 }
 
 func loadRESTConfig(kubeconfigPath, contextName string) (*rest.Config, error) {
-	// InCluster trước, fallback kubeconfig
 	if cfg, err := rest.InClusterConfig(); err == nil {
 		return cfg, nil
 	}
@@ -71,6 +70,8 @@ func (r *Repo) ListNamespaces(ctx context.Context) ([]string, error) {
 	for _, ns := range list.Items {
 		out = append(out, ns.Name)
 	}
+	// add "all" namespace
+	out = append([]string{"all"}, out...)
 	return out, nil
 }
 
@@ -78,6 +79,11 @@ func (r *Repo) ListPods(ctx context.Context, ns string, selector string) ([]doma
 	opts := metav1.ListOptions{}
 	if selector != "" {
 		opts.LabelSelector = selector // k8s-standard label selector string
+	}
+
+	// if ns "all" -> empty string
+	if ns == "all" {
+		ns = ""
 	}
 
 	// 1) Get pod objects (for Ready/Phase/Node)
@@ -297,7 +303,6 @@ func max64(a, b int64) int64 {
 
 // -------- LogsRepo --------
 
-// StreamLogs: hiện implement Pod logs; owner logs (Deployment/DS/SS) có thể gom theo selector
 func (r *Repo) StreamLogs(ctx context.Context, t domain.LogsTarget) (<-chan domain.LogLine, error) {
 	ch := make(chan domain.LogLine, 200)
 
@@ -307,7 +312,7 @@ func (r *Repo) StreamLogs(ctx context.Context, t domain.LogsTarget) (<-chan doma
 			Container:  t.Container,
 			Follow:     true,
 			Timestamps: false,
-			// SinceSeconds: pointer.Int64(600), // nếu muốn
+			// SinceSeconds: pointer.Int64(600),
 		})
 		stream, err := req.Stream(ctx)
 		if err != nil {
@@ -339,16 +344,13 @@ func (r *Repo) StreamLogs(ctx context.Context, t domain.LogsTarget) (<-chan doma
 		return ch, nil
 
 	case "Deployment", "StatefulSet", "DaemonSet":
-		// Lấy selector của owner rồi gom các Pod
 		ns := t.Namespace
 		sel, _ := r.selectorOfOwner(ctx, ns, t)
 		pods, _ := r.core.CoreV1().Pods(ns).List(ctx, metav1.ListOptions{LabelSelector: sel})
-		// Mở nhiều stream, prefix theo [pod/container]
 		go r.streamMultiPods(ctx, ch, pods.Items, "")
 		return ch, nil
 
 	case "Node":
-		// Thường không có kubelet logs qua API => fallback: events của Node
 		go r.streamNodeEvents(ctx, ch, t.Name)
 		return ch, nil
 	}
@@ -359,7 +361,6 @@ func (r *Repo) StreamLogs(ctx context.Context, t domain.LogsTarget) (<-chan doma
 }
 
 func (r *Repo) streamMultiPods(ctx context.Context, out chan<- domain.LogLine, pods []corev1.Pod, container string) {
-	// đơn giản: nối tuần tự (hoặc dùng goroutine + fan-in)
 	for _, p := range pods {
 		req := r.core.CoreV1().Pods(p.Namespace).GetLogs(p.Name, &corev1.PodLogOptions{
 			Container: container,
@@ -402,9 +403,7 @@ func (r *Repo) streamNodeEvents(ctx context.Context, out chan<- domain.LogLine, 
 	}
 }
 
-// selectorOfOwner: lấy label selector từ owner để gom pods
 func (r *Repo) selectorOfOwner(ctx context.Context, ns string, t domain.LogsTarget) (string, error) {
-	// ví dụ với Deployment
 	if t.Kind == "Deployment" {
 		d, err := r.core.AppsV1().Deployments(ns).Get(ctx, t.Name, metav1.GetOptions{})
 		if err != nil {
@@ -412,7 +411,6 @@ func (r *Repo) selectorOfOwner(ctx context.Context, ns string, t domain.LogsTarg
 		}
 		return metav1.FormatLabelSelector(d.Spec.Selector), nil
 	}
-	// tuỳ Kind: thêm DS/SS/Jobs/CronJobs...
 	return "", fmt.Errorf("not implemented")
 }
 

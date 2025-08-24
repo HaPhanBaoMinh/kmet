@@ -240,9 +240,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		if m.nsPickerOpen {
 			switch msg.String() {
-			case "esc":
-				m.nsPickerOpen = false
-				return m, nil
 			case "enter":
 				if len(m.nsList) > 0 {
 					idx := m.nsTable.Cursor()
@@ -288,6 +285,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.logsVP.GotoBottom()
 				return m, nil
 			}
+
 		}
 
 		switch msg.String() {
@@ -322,8 +320,30 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.autoCursor = true // <— reset cursor on next load
 			return m, m.fetch()
 		case "i":
-			m.infoOpen = !m.infoOpen
+			m.infoOpen = true
 			return m, func() tea.Msg { return tea.WindowSizeMsg{Width: m.width, Height: m.height} }
+
+		case "esc":
+			if m.infoOpen {
+				m.infoOpen = false
+				return m, nil
+			}
+
+			if m.logsOpen {
+				m.logsOpen = false
+				return m, nil
+			}
+
+			if m.nsPickerOpen {
+				m.nsPickerOpen = false
+				return m, nil
+			}
+			if m.logsCancel != nil {
+				m.logsCancel()
+			}
+			m.nsTable.Blur()
+			m.cancel()
+			return m, tea.Quit
 
 		// case "l":
 		// 	if m.logsOpen {
