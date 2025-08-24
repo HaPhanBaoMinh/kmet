@@ -1,3 +1,34 @@
+kmet (0.0.1ppa6~noble) noble; urgency=medium
+
+  * Initial native PPA build.
+
+ -- Ha Phan Bao Minh <haphanbaominh.dev@gmail.com>  Sat, 24 Aug 2025 22:30:00 +0700
+
+ kmet (0.0.1ppa5~noble) noble; urgency=medium
+
+  * Initial native PPA build.
+
+ -- Ha Phan Bao Minh <haphanbaominh.dev@gmail.com>  Sat, 24 Aug 2025 22:30:00 +0700
+
+
+kmet (0.0.1ppa4~noble) noble; urgency=medium
+
+  * Initial native PPA build.
+
+ -- Ha Phan Bao Minh <haphanbaominh.dev@gmail.com>  Sat, 24 Aug 2025 22:30:00 +0700
+
+kmet (0.0.1-0ppa3~noble) noble; urgency=medium
+
+  * Reupload with orig tarball
+
+ -- Ha Phan Bao Minh <haphanbaominh.dev@gmail.com>  Sun, 24 Aug 2025 23:28:15 +0700
+
+kmet (0.0.1-0ppa2~noble) noble; urgency=medium
+
+  * Confirm GPG key; reupload
+
+ -- baominh <baominh@baominh-ThinkPad-T480s>  Sun, 24 Aug 2025 23:15:24 +0700
+
 kmet (0.0.1-0ppa1) noble; urgency=medium
 
   * Initial PPA release
