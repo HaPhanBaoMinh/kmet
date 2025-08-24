@@ -31,3 +31,9 @@ _build/
 *.changes
 *.dsc
 *.buildinfo
+bin/
+_build/
+*.deb
+*.changes
+*.dsc
+*.buildinfo
