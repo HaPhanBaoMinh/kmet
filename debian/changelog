@@ -1,35 +1,31 @@
-kmet (0.0.1ppa6~noble) noble; urgency=medium
+kmet (0.0.1ppa16) noble; urgency=medium
 
-  * Initial native PPA build.
+  * Build with Go 1.22 + vendored deps
 
- -- Ha Phan Bao Minh <haphanbaominh.dev@gmail.com>  Sat, 24 Aug 2025 22:30:00 +0700
+ -- baominh <baominh@baominh-ThinkPad-T480s>  Mon, 25 Aug 2025 10:07:15 +0700
 
- kmet (0.0.1ppa5~noble) noble; urgency=medium
+ kmet (0.0.1ppa15) noble; urgency=medium
 
-  * Initial native PPA build.
+  * Build with Go 1.22 + vendored deps
 
- -- Ha Phan Bao Minh <haphanbaominh.dev@gmail.com>  Sat, 24 Aug 2025 22:30:00 +0700
+ -- baominh <baominh@baominh-ThinkPad-T480s>  Mon, 25 Aug 2025 10:07:15 +0700
 
 
-kmet (0.0.1ppa4~noble) noble; urgency=medium
+ kmet (0.0.1ppa14) noble; urgency=medium
 
-  * Initial native PPA build.
+  * Build with Go 1.22 + vendored deps
 
- -- Ha Phan Bao Minh <haphanbaominh.dev@gmail.com>  Sat, 24 Aug 2025 22:30:00 +0700
+ -- baominh <baominh@baominh-ThinkPad-T480s>  Mon, 25 Aug 2025 10:07:15 +0700
 
-kmet (0.0.1-0ppa3~noble) noble; urgency=medium
 
-  * Reupload with orig tarball
+ kmet (0.0.1ppa13) noble; urgency=medium
 
- -- Ha Phan Bao Minh <haphanbaominh.dev@gmail.com>  Sun, 24 Aug 2025 23:28:15 +0700
+  * Build with Go 1.22 + vendored deps
 
-kmet (0.0.1-0ppa2~noble) noble; urgency=medium
+ -- baominh <baominh@baominh-ThinkPad-T480s>  Mon, 25 Aug 2025 10:07:15 +0700
 
-  * Confirm GPG key; reupload
 
- -- baominh <baominh@baominh-ThinkPad-T480s>  Sun, 24 Aug 2025 23:15:24 +0700
-
-kmet (0.0.1-0ppa1) noble; urgency=medium
+kmet (0.0.1-0ppa10) noble; urgency=medium
 
   * Initial PPA release
 
