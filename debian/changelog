@@ -1,32 +1,39 @@
-kmet (0.0.1ppa16) noble; urgency=medium
+kmet (0.0.4-0ppa2~noble) noble; urgency=medium
 
-  * Build with Go 1.22 + vendored deps
+  * Vendor deps; offline build on Launchpad
 
- -- baominh <baominh@baominh-ThinkPad-T480s>  Mon, 25 Aug 2025 10:07:15 +0700
+ -- Ha Phan Bao Minh <haphanbaominh.dev@gmail.com>  Mon, 25 Aug 2025 20:03:57 +0700
 
- kmet (0.0.1ppa15) noble; urgency=medium
+ kmet (0.0.4-0ppa1~noble) noble; urgency=medium
 
-  * Build with Go 1.22 + vendored deps
+  * Vendor deps; offline build on Launchpad
 
- -- baominh <baominh@baominh-ThinkPad-T480s>  Mon, 25 Aug 2025 10:07:15 +0700
-
-
- kmet (0.0.1ppa14) noble; urgency=medium
-
-  * Build with Go 1.22 + vendored deps
-
- -- baominh <baominh@baominh-ThinkPad-T480s>  Mon, 25 Aug 2025 10:07:15 +0700
+ -- Ha Phan Bao Minh <haphanbaominh.dev@gmail.com>  Mon, 25 Aug 2025 20:03:57 +0700
 
 
- kmet (0.0.1ppa13) noble; urgency=medium
+kmet (0.0.2-0ppa4~noble) noble; urgency=medium
 
-  * Build with Go 1.22 + vendored deps
+  * New upstream 0.0.2; reset to non-native quilt and include orig
+    tarball
 
- -- baominh <baominh@baominh-ThinkPad-T480s>  Mon, 25 Aug 2025 10:07:15 +0700
+ -- Ha Phan Bao Minh <haphanbaominh.dev@gmail.com>  Mon, 25 Aug 2025 19:26:40 +0700
 
+kmet (0.0.2-0ppa3~noble) noble; urgency=medium
 
-kmet (0.0.1-0ppa10) noble; urgency=medium
+  * New upstream 0.0.2; reset to non-native quilt and include orig
+    tarball
 
-  * Initial PPA release
+ -- Ha Phan Bao Minh <haphanbaominh.dev@gmail.com>  Mon, 25 Aug 2025 18:43:37 +0700
 
- -- Ha Phan Bao Minh <haphanbaominh.dev@gmail.com>  Sun, 24 Aug 2025 21:07:58 +0700
+kmet (0.0.2-0ppa1~noble) noble; urgency=medium
+
+  * New upstream 0.0.2; reset to non-native quilt and include orig
+    tarball
+
+ -- Ha Phan Bao Minh <haphanbaominh.dev@gmail.com>  Mon, 25 Aug 2025 18:40:12 +0700
+
+kmet (0.0.1-0ppa20~noble) noble; urgency=medium
+
+  * Initial PPA build.
+
+ -- Ha Phan Bao Minh <haphanbaominh.dev@gmail.com>  Mon, 25 Aug 2025 17:59:13 +0700
