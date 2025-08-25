@@ -1,0 +1,27 @@
+Source: kmet
+Section: utils
+Priority: optional
+Maintainer: Ha Phan Bao Minh <haphanbaominh.dev@gmail.com>
+Homepage: https://github.com/HaPhanBaoMinh/kmet
+Build-Depends: debhelper-compat (= 13), dh-golang, golang-any
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+
+Package: kmet
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: a lightweight kubectl top alternative with TUI for Kubernetes metrics
+ kmet is a command-line tool written in Go that provides a top-like
+ interface for Kubernetes clusters. It uses client-go and the metrics
+ API to show real-time CPU and memory usage of Pods and Nodes.
+ The interface is built with Bubbletea to resemble a simplified K9s,
+ featuring tables, navigation, sorting, and log streaming.
+ .
+ Features:
+  - top pods / top nodes view with CPU and memory usage
+  - namespace and label selector support
+  - sort by CPU or memory
+  - live watch/refresh mode
+  - interactive TUI with bars, sparklines, and info pane
+  - view container logs directly from the UI
+

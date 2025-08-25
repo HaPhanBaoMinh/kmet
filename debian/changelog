@@ -1,0 +1,32 @@
+kmet (0.0.1ppa16) noble; urgency=medium
+
+  * Build with Go 1.22 + vendored deps
+
+ -- baominh <baominh@baominh-ThinkPad-T480s>  Mon, 25 Aug 2025 10:07:15 +0700
+
+ kmet (0.0.1ppa15) noble; urgency=medium
+
+  * Build with Go 1.22 + vendored deps
+
+ -- baominh <baominh@baominh-ThinkPad-T480s>  Mon, 25 Aug 2025 10:07:15 +0700
+
+
+ kmet (0.0.1ppa14) noble; urgency=medium
+
+  * Build with Go 1.22 + vendored deps
+
+ -- baominh <baominh@baominh-ThinkPad-T480s>  Mon, 25 Aug 2025 10:07:15 +0700
+
+
+ kmet (0.0.1ppa13) noble; urgency=medium
+
+  * Build with Go 1.22 + vendored deps
+
+ -- baominh <baominh@baominh-ThinkPad-T480s>  Mon, 25 Aug 2025 10:07:15 +0700
+
+
+kmet (0.0.1-0ppa10) noble; urgency=medium
+
+  * Initial PPA release
+
+ -- Ha Phan Bao Minh <haphanbaominh.dev@gmail.com>  Sun, 24 Aug 2025 21:07:58 +0700
