@@ -1,7 +1,8 @@
 module github.com/HaPhanBaoMinh/kmet
 
-go 1.22
+go 1.23.0
 
+toolchain go1.24.6
 
 require (
 	github.com/charmbracelet/bubbles v0.17.0
@@ -69,3 +70,9 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.6.0 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
+
+replace golang.org/x/net => golang.org/x/net v0.36.0
+
+replace golang.org/x/sys => golang.org/x/sys v0.29.0
+
+replace golang.org/x/term => golang.org/x/term v0.24.0
