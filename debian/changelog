@@ -1,10 +1,18 @@
-kmet (0.0.1+vend1-0ppa2~test002~noble) UNRELEASED; urgency=medium
+kmet (0.0.2-0ppa3~noble) noble; urgency=medium
 
-  * Repack orig with updated vendor tree.
+  * New upstream 0.0.2; reset to non-native quilt and include orig
+    tarball
 
- -- Ha Phan Bao Minh <haphanbaominh.dev@gmail.com>  Mon, 25 Aug 2025 18:02:17 +0700
+ -- Ha Phan Bao Minh <haphanbaominh.dev@gmail.com>  Mon, 25 Aug 2025 18:43:37 +0700
 
-kmet (0.0.1-0ppa1~test001~noble) noble; urgency=medium
+kmet (0.0.2-0ppa1~noble) noble; urgency=medium
+
+  * New upstream 0.0.2; reset to non-native quilt and include orig
+    tarball
+
+ -- Ha Phan Bao Minh <haphanbaominh.dev@gmail.com>  Mon, 25 Aug 2025 18:40:12 +0700
+
+kmet (0.0.1-0ppa20~noble) noble; urgency=medium
 
   * Initial PPA build.
 
