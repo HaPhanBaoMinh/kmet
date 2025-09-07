@@ -1,3 +1,4 @@
+// internal/ui/app/app.go
 package app
 
 import (
@@ -65,9 +66,11 @@ type Model struct {
 
 func New(repoM domain.MetricsRepo, repoL domain.LogsRepo) Model {
 	ctx, cancel := context.WithCancel(context.Background())
+
 	t := table.New()
 	t.SetHeight(12)
 	t.SetWidth(100)
+
 	m := Model{
 		ctx:        ctx,
 		cancel:     cancel,
@@ -98,21 +101,19 @@ func New(repoM domain.MetricsRepo, repoL domain.LogsRepo) Model {
 	m.nsTable.SetColumns([]table.Column{{Title: "Namespaces", Width: 32}})
 	var nsRows []table.Row
 	for _, ns := range m.nsList {
-		// m.ns = m.nsList[0]
 		nsRows = append(nsRows, table.Row{ns})
 	}
 	m.nsTable.SetRows(nsRows)
 	m.nsTable.SetHeight(10)
 	m.nsTable.SetWidth(36)
 
-	m.ticker = time.NewTicker(2 * time.Second)
 	return m
 }
 
 func (m Model) Init() tea.Cmd {
 	return tea.Batch(
 		m.fetch(),
-		tea.Tick(time.Millisecond*500, func(time.Time) tea.Msg { return tickMsg{} }),
+		tea.Tick(500*time.Millisecond, func(time.Time) tea.Msg { return tickMsg{} }),
 	)
 }
 
@@ -161,28 +162,47 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
-		m.table.SetWidth(m.width - 4)
-		m.logsVP.Width = m.width - 4
 
-		base := m.height - 4
-		tableH := base
-		if m.infoOpen && m.logsOpen {
-			tableH = int(float64(base) * 0.5)
+		// compute vertical layout using measured header/footer, not magic numbers
+		headerH := lipgloss.Height(styles.Header.Render("x"))
+		footerH := lipgloss.Height(styles.Footer.Render("x"))
+		base := m.height - headerH - footerH - 2 // top/bot padding
+
+		if base < 10 {
+			base = 10
+		}
+
+		switch {
+		case m.infoOpen && m.logsOpen:
+			m.table.SetHeight(int(float64(base) * 0.5))
+			m.logsVP.Width = m.width - 4
 			m.logsVP.Height = int(float64(base) * 0.3)
-		} else if m.logsOpen {
-			tableH = int(float64(base) * 0.55)
-			m.logsVP.Height = base - tableH
-		} else if m.infoOpen {
-			tableH = int(float64(base) * 0.65)
+
+		case m.logsOpen:
+			m.table.SetHeight(int(float64(base) * 0.55))
+			m.logsVP.Width = m.width - 4
+			m.logsVP.Height = base - m.table.Height()
+
+		case m.infoOpen:
+			m.table.SetHeight(int(float64(base) * 0.65))
+			m.logsVP.Width = m.width - 4
 			m.logsVP.Height = 0
-		} else {
+
+		default:
+			m.table.SetHeight(base)
+			m.logsVP.Width = m.width - 4
 			m.logsVP.Height = 0
 		}
-		if tableH < 8 {
-			tableH = 8
-		}
-		m.table.SetHeight(tableH)
-		return m, nil
+		// table target width = terminal width minus side padding/borders
+		m.table.SetWidth(m.width - 4)
+
+		// rebuild columns with new widths
+		m.rebuildTable()
+
+		// forward resize to viewport for internal state updates
+		var cmd tea.Cmd
+		m.logsVP, cmd = m.logsVP.Update(msg)
+		return m, cmd
 
 	case podsMsg:
 		m.pods = msg
@@ -194,7 +214,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// nothing to select
 		} else if m.autoCursor || cur < 0 || cur >= rows {
 			m.table.SetCursor(0) // auto-select first ONLY when needed
-		} // else keep user's current selection
+		}
 		m.autoCursor = false
 		return m, nil
 
@@ -211,6 +231,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.autoCursor = false
 		return m, nil
+
 	case logLineMsg:
 		ln := domain.LogLine(msg)
 		m.logBuf.WriteString(fmt.Sprintf("%s %-5s %s [%s]\n",
@@ -224,7 +245,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case dataMsg:
 		m.rebuildTable()
-		// if we got data from old fetch() path
 		if (m.view == ViewPods && len(m.pods) > 0) ||
 			(m.view == ViewNodes && len(m.nodes) > 0) {
 			m.table.SetCursor(0)
@@ -238,6 +258,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		)
 
 	case tea.KeyMsg:
+		if m.logsOpen {
+			var cmd tea.Cmd
+			m.logsVP, cmd = m.logsVP.Update(msg)
+			return m, cmd
+		}
 		if m.nsPickerOpen {
 			switch msg.String() {
 			case "enter":
@@ -268,24 +293,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.nsTable, cmd = m.nsTable.Update(msg)
 				return m, cmd
 			}
-
-		}
-		if m.logsOpen {
-			switch msg.String() {
-			case "pgup":
-				m.logsVP.LineUp(10)
-				return m, nil
-			case "pgdn":
-				m.logsVP.LineDown(10)
-				return m, nil
-			case "g":
-				m.logsVP.GotoTop()
-				return m, nil
-			case "G":
-				m.logsVP.GotoBottom()
-				return m, nil
-			}
-
 		}
 
 		switch msg.String() {
@@ -317,10 +324,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.view = ViewPods
 			}
 			m.infoOpen, m.logsOpen = false, false
-			m.autoCursor = true // <— reset cursor on next load
+			m.autoCursor = true
 			return m, m.fetch()
+
 		case "i":
 			m.infoOpen = true
+			// trigger a synthetic resize to recalc heights
 			return m, func() tea.Msg { return tea.WindowSizeMsg{Width: m.width, Height: m.height} }
 
 		case "esc":
@@ -328,12 +337,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.infoOpen = false
 				return m, nil
 			}
-
 			if m.logsOpen {
 				m.logsOpen = false
 				return m, nil
 			}
-
 			if m.nsPickerOpen {
 				m.nsPickerOpen = false
 				return m, nil
@@ -344,25 +351,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.nsTable.Blur()
 			m.cancel()
 			return m, tea.Quit
-
-		// case "l":
-		// 	if m.logsOpen {
-		// 		m.logsOpen = false
-		// 		if m.logsCancel != nil {
-		// 			m.logsCancel()
-		// 		}
-		// 		return m, func() tea.Msg { return tea.WindowSizeMsg{Width: m.width, Height: m.height} }
-		// 	}
-		// 	m.logsOpen = true
-		// 	target := m.currentLogsTarget()
-		// 	ctx, cancel := context.WithCancel(m.ctx)
-		// 	m.logsCancel = cancel
-		// 	m.logsVP.SetContent("")
-		// 	m.logBuf.Reset()
-		// 	return m, tea.Batch(
-		// 		m.consumeLogs(ctx, target),
-		// 		func() tea.Msg { return tea.WindowSizeMsg{Width: m.width, Height: m.height} },
-		// 	)
 
 		case "s":
 			if m.sortBy == "cpu" {
@@ -391,15 +379,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *Model) rebuildTable() {
 	switch m.view {
 	case ViewPods:
+		total := m.table.Width()
+		wPod, wCPU, wCPUBar, wMem, wMemBar, wReady, wNode, wTrend := m.podColWidths(total)
+
 		cols := []table.Column{
-			{Title: "POD (ctr)", Width: 36},
-			{Title: "CPU", Width: 10},
-			{Title: "", Width: 32},
-			{Title: "MEM", Width: 10},
-			{Title: "", Width: 32},
-			{Title: "READY", Width: 6},
-			{Title: "NODE", Width: 16},
-			{Title: "Trend", Width: 12},
+			{Title: "POD (ctr)", Width: wPod},
+			{Title: "CPU", Width: wCPU},
+			{Title: "", Width: wCPUBar},
+			{Title: "MEM", Width: wMem},
+			{Title: "", Width: wMemBar},
+			{Title: "READY", Width: wReady},
+			{Title: "NODE", Width: wNode},
+			{Title: "Trend", Width: wTrend},
 		}
 
 		// Find max CPU and Mem (used for normalization fallback)
@@ -430,7 +421,7 @@ func (m *Model) rebuildTable() {
 			} else {
 				cpuNormBase = float64(maxCPU)
 			}
-			cpuBar := widgets.Bar(float64(p.CPUm)/cpuNormBase, 20)
+			cpuBar := widgets.Bar(float64(p.CPUm)/cpuNormBase, wCPUBar-1)
 
 			var memNormBase float64
 			if p.MemReqBytes > 0 {
@@ -438,7 +429,7 @@ func (m *Model) rebuildTable() {
 			} else {
 				memNormBase = float64(maxMem)
 			}
-			memBar := widgets.Bar(float64(p.MemBytes)/memNormBase, 25)
+			memBar := widgets.Bar(float64(p.MemBytes)/memNormBase, wMemBar-1)
 
 			rows = append(rows, table.Row{
 				fmt.Sprintf("%s (%s)", p.PodName, p.Container),
@@ -448,7 +439,7 @@ func (m *Model) rebuildTable() {
 				memBar,
 				p.Ready,
 				p.NodeName,
-				widgets.Spark8(p.CPUTrend.Samples, 8),
+				widgets.Spark8(p.CPUTrend.Samples, wTrend),
 			})
 		}
 		m.table.SetColumns(cols)
@@ -456,35 +447,38 @@ func (m *Model) rebuildTable() {
 		m.table.Focus()
 
 	case ViewNodes:
+		total := m.table.Width()
+		wNode, wCPUP, wCPUBar, wMEMP, wMEMBar, wPods, wK8s, wTrend := m.nodeColWidths(total)
+
 		cols := []table.Column{
-			{Title: "NODE", Width: 20},
-			{Title: "CPU%", Width: 8},
-			{Title: "", Width: 16}, // CPU bar
-			{Title: "MEM%", Width: 8},
-			{Title: "", Width: 16}, // MEM bar
-			{Title: "PODS", Width: 6},
-			{Title: "K8S", Width: 8},
-			{Title: "Trend", Width: 12},
+			{Title: "NODE", Width: wNode},
+			{Title: "CPU%", Width: wCPUP},
+			{Title: "", Width: wCPUBar},
+			{Title: "MEM%", Width: wMEMP},
+			{Title: "", Width: wMEMBar},
+			{Title: "PODS", Width: wPods},
+			{Title: "K8S", Width: wK8s},
+			{Title: "Trend", Width: wTrend},
 		}
 		var rows []table.Row
 		for _, n := range m.nodes {
 			cpuPct := fmt.Sprintf("%3.0f%%", n.CPUUsed*100)
 			memPct := fmt.Sprintf("%3.0f%%", n.MEMUsed*100)
-			cpuBar := widgets.Bar(n.CPUUsed, 16)
-			memBar := widgets.Bar(n.MEMUsed, 16)
-			trend := widgets.Spark8(n.CPUTrend.Samples, 8)
+			cpuBar := widgets.Bar(n.CPUUsed, wCPUBar-1)
+			memBar := widgets.Bar(n.MEMUsed, wMEMBar-1)
+			trend := widgets.Spark8(n.CPUTrend.Samples, wTrend)
 			if trend == "" {
 				trend = "—"
 			}
 			rows = append(rows, table.Row{
-				n.NodeName,                // 1
-				cpuPct,                    // 2
-				cpuBar,                    // 3
-				memPct,                    // 4
-				memBar,                    // 5
-				fmt.Sprintf("%d", n.Pods), // 6
-				n.K8sVer,                  // 7
-				trend,                     // 8
+				n.NodeName,
+				cpuPct,
+				cpuBar,
+				memPct,
+				memBar,
+				fmt.Sprintf("%d", n.Pods),
+				n.K8sVer,
+				trend,
 			})
 		}
 		m.table.SetColumns(cols)
@@ -563,7 +557,6 @@ func (m Model) View() string {
 			title,
 			m.nsTable.View(),
 		)
-		// căn giữa màn hình
 		overlay = lipgloss.Place(m.width, m.height,
 			lipgloss.Center, lipgloss.Center,
 			box.Render(content),
@@ -573,7 +566,6 @@ func (m Model) View() string {
 
 	main := lipgloss.JoinVertical(lipgloss.Left, head, body, info, logs, footer)
 	if m.nsPickerOpen {
-		// ghép overlay lên trên (simple: nối cuối; advanced: layer)
 		return main + "\n" + overlay
 	}
 	return main
@@ -626,13 +618,14 @@ Trend CPU: %s
 Trend MEM: %s`,
 			p.PodName, p.Namespace, p.NodeName, p.Phase, p.Container,
 			p.CPUReqm, p.MemReqBytes/(1024*1024), p.Ready,
-			utilCPUReq*100, widgets.Bar(utilCPUReq/2.5, 12), // scale a bit
+			utilCPUReq*100, widgets.Bar(utilCPUReq/2.5, 12),
 			utilMemReq*100, widgets.Bar(utilMemReq/3.0, 12),
 			utilCPUMax*100, widgets.Bar(utilCPUMax, 12),
 			utilMemMax*100, widgets.Bar(utilMemMax, 12),
 			widgets.Spark8(p.CPUTrend.Samples, 30),
 			widgets.Spark8(p.MemTrend.Samples, 30),
 		)
+
 	case ViewNodes:
 		i := m.currentSelection()
 		if len(m.nodes) == 0 {
@@ -651,7 +644,6 @@ Trend MEM: %s`,
 }
 
 func sortPods(p []domain.PodMetric, by string) {
-	// simple bubble (mock), stable enough for demo
 	for i := 0; i < len(p); i++ {
 		for j := 0; j < len(p)-1; j++ {
 			less := p[j].CPUm < p[j+1].CPUm

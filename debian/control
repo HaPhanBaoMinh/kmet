@@ -3,7 +3,7 @@ Section: utils
 Priority: optional
 Maintainer: Ha Phan Bao Minh <haphanbaominh.dev@gmail.com>
 Homepage: https://github.com/HaPhanBaoMinh/kmet
-Build-Depends: debhelper-compat (= 13), dh-golang, golang-any
+Build-Depends: debhelper-compat (= 13), golang-go
 Standards-Version: 4.7.0
 Rules-Requires-Root: no
 
