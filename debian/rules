@@ -3,11 +3,14 @@ export DH_VERBOSE=1
 export GO111MODULE=on
 export GOFLAGS=-mod=vendor -buildvcs=false
 export CGO_ENABLED=0
+export GOCACHE=$(CURDIR)/.cache/go-build
+export GOMODCACHE=$(CURDIR)/.cache/go-mod
 
 %:
 	dh $@
 
 override_dh_auto_build:
+	mkdir -p $(GOCACHE) $(GOMODCACHE)
 	go build -v -trimpath -ldflags "-s -w" -o build/kmet ./cmd/kmet
 
 override_dh_auto_install:
