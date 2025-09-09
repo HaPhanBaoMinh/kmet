@@ -4,6 +4,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -611,17 +612,17 @@ func (m Model) renderInfo() string {
 Image: ghcr.io/acme/%s:mock
 Requests: cpu=%dm mem=%dMi  Ready: %s
 
-Util vs Req: CPU %.0f%% %s  MEM %.0f%% %s
-Util vs Max: CPU %.0f%% %s  MEM %.0f%% %s
+Util vs Req: CPU %3.0f%% %s  MEM %3.0f%% %s
+Util vs Max: CPU %3.0f%% %s  MEM %3.0f%% %s
 
 Trend CPU: %s
 Trend MEM: %s`,
 			p.PodName, p.Namespace, p.NodeName, p.Phase, p.Container,
 			p.CPUReqm, p.MemReqBytes/(1024*1024), p.Ready,
-			utilCPUReq*100, widgets.Bar(utilCPUReq/2.5, 12),
-			utilMemReq*100, widgets.Bar(utilMemReq/3.0, 12),
-			utilCPUMax*100, widgets.Bar(utilCPUMax, 12),
-			utilMemMax*100, widgets.Bar(utilMemMax, 12),
+			utilCPUReq*100, widgets.Bar(math.Min(utilCPUReq, 1), 20),
+			utilMemReq*100, widgets.Bar(math.Min(utilMemReq, 1), 20),
+			utilCPUMax*100, widgets.Bar(utilCPUMax, 20),
+			utilMemMax*100, widgets.Bar(utilMemMax, 20),
 			widgets.Spark8(p.CPUTrend.Samples, 30),
 			widgets.Spark8(p.MemTrend.Samples, 30),
 		)

@@ -46,4 +46,8 @@ kmet -mock
 
 ### Notes
 - For real metrics, your cluster should expose metrics via metrics.k8s.io (e.g. metrics‑server). Without it, usage bars may show zeros.
+<<<<<<< HEAD
 - Your kubeconfig/user needs permission to list pods/nodes and read pod logs.
+=======
+- Your kubeconfig/user needs permission to list pods/nodes and read pod logs.
+>>>>>>> ff5f743a683a6b199994da076fefcc672d3c04eb
