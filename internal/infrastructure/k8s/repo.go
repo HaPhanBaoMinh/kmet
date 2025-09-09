@@ -29,6 +29,8 @@ type Repo struct {
 
 func New(kubeconfigPath, contextName string) (*Repo, error) {
 	cfg, err := loadRESTConfig(kubeconfigPath, contextName)
+	cfg.QPS = 30
+	cfg.Burst = 60
 	if err != nil {
 		return nil, err
 	}

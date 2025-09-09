@@ -113,7 +113,7 @@ func New(repoM domain.MetricsRepo, repoL domain.LogsRepo) Model {
 func (m Model) Init() tea.Cmd {
 	return tea.Batch(
 		m.fetch(),
-		tea.Tick(500*time.Millisecond, func(time.Time) tea.Msg { return tickMsg{} }),
+		tea.Tick(2*time.Second, func(time.Time) tea.Msg { return tickMsg{} }),
 	)
 }
 
